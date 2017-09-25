@@ -1,10 +1,13 @@
 var inquirer = require('inquirer');
-var game = require('./tictactoe');
+var Board = require('./board');
 
 // Start of game
 // Make a new board
-var board = new game.Board();
+var board = new Board(3);
 
+while (!this.finished) {
+  
+}
 // Prompt player 1 for a move
   // execute move
   // show board
