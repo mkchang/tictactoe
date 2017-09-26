@@ -2,14 +2,14 @@ var Board = function(n) {
   
   this.n = n || 3;
   this.board = [];
-  for (var i = 0; i < this.n; i++) {
-    this.board[i] = [];
-    for (var j = 0; j < this.n; j++) {
-      this.board[i].push(0)
-    }
-  }
+  this.resetGame();
+
   this.finished = false;
-  this.winner = null;
+  this.currentPlayer = 1;
+  this.piece = {
+    1: 'x',
+    2: 'o'
+  };
 }
 
 Board.prototype = {
@@ -18,61 +18,71 @@ Board.prototype = {
       console.log(this.board[i]);
     }
   },
-  toggleMove: function(player, row, col) {
-    if (this.board[row][col]) {
-      console.log('Not a valid move, please try again');
-    } else if (player === 1) {
-      this.board[row][col] = 1;
-    } else {
-      this.board[row][col] = 2;      
-    }
+  convertMoveToRowCol: function(move) {
+    return {
+      row: Math.floor((move - 1) / this.n),
+      col: ((move - 1) % this.n)
+    };
   },
-  checkWin: function(player) {
-    // check if player has won
+  isValidMove: function(row, col) {
+    return (row <= this.n - 1) && 
+      (row >= 0) && 
+      (col <= this.n - 1) && 
+      (col >= 0) &&
+      (typeof this.board[row][col] === 'number');
+  },
+  toggleMove: function(row, col) {
+    this.board[row][col] = this.piece[this.currentPlayer];
+  },
+  isWin: function(row, col) {
+    var playerPiece = this.piece[this.currentPlayer];
+
     var checkRow = function(row) {
-      return row.reduce(function(acc, val) {
-        return acc + val;
-      }) === (3 * player);
-    };
-    var checkRows = function(board) {
-      return board.reduce(function(acc, row) {
-        return acc || checkRow(row);
-      }, false);
-    };
+      return this.board[row].every(function(position) {
+        return position === playerPiece;
+      });
+    }.bind(this);
 
     var checkCol = function(col) {
-      return col.reduce(function(acc, val) {
-        return acc + val;
-      }) === (3 * player);
-    };
-    var checkCols = function(board) {
-      return board.reduce(function(acc, row, index) {
-        return acc || checkCol(board.map(function(row) {
-          return row[index];
-        }))
-      }, false);
-    };
-    var checkDiagonals = function(board) {
-      return (
-        board.reduce(function(acc, val, index) {
-          return acc + val[index];
-        }) === (3 * player)
-      ) || 
-      (
-        board.reduce(function(acc, val, index) {
-          return acc + val[board.length - 1 - index];
-        }) === (3 * player)
-      );
-    }
+      var fullCol = this.board.map(function(row) {
+        return row[col];
+      })
+      return fullCol.every(function(position) {
+        return position === playerPiece;
+      });
+    }.bind(this);
 
-    var won = checkRows(this.board) || checkCols(this.board) || checkDiagonals(this.board);
-    if (won) {
-      this.finished = true;
-      this.winner = player;
-    }
+    var checkDiagonals = function(row, col) {
+      var n = this.n;
+      if (row === col || col === n - 1 - row) {
+        var majorDiag = this.board.every(function(rowArray, index) {
+          return (rowArray[index]) === playerPiece;
+        });
+        var minorDiag = this.board.every(function(rowArray, index) {
+          return (rowArray[n - 1 - index]) === playerPiece;
+        });
+        return majorDiag || minorDiag;
+      } else {
+        return false;
+      }
+    }.bind(this);
+
+    return checkRow(row) || checkCol(col) || checkDiagonals(row, col);
+  },
+  handleWin: function() {
+    this.finished = true;
+    console.log(`Game over! Player ${this.currentPlayer} wins!`);
+  },
+  changePlayer: function() {
+    this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
   },
   resetGame: function() {
-    // reset game
+    for (var i = 0; i < this.n; i++) {
+      this.board[i] = [];
+      for (var j = 0; j < this.n; j++) {
+        this.board[i].push(j + (i * this.n) + 1);
+      }
+    }
   }
 };
 
